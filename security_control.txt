@@ -25,7 +25,7 @@ def check_remote_security_status(url="https://raw.githubusercontent.com/plantalo
         # Opcional: Descomenta la siguiente línea para depurar el valor leído
         # print(f"Debug: Remote security status leído desde '{url}': '{status}'")
 
-        return status == "ON"
+        return status == "OFF"
 
     except requests.exceptions.HTTPError as http_err:
         # Error específico para respuestas HTTP no exitosas (ej. 404 Not Found, 500 Server Error)
