@@ -1,20 +1,52 @@
-import requests
+# (Asegúrate de tener 'import requests' en la parte superior de tu script principal)
 
-def check_remote_security_status(url="https://raw.githubusercontent.com/plantaloky/RemotePilot/main/security_control.txt"):
+def check_remote_security_status(url="https://raw.githubusercontent.com/plantaloky/RemotePilot/main/security_control.txt", timeout=5):
+    """
+    Verifica un estado de seguridad remoto desde una URL.
+
+    Args:
+        url (str): La URL del archivo de texto que contiene el estado ("ON" o "OFF").
+        timeout (int): Tiempo máximo en segundos para esperar la respuesta.
+
+    Returns:
+        bool: True si el estado es "ON", False en caso contrario o si ocurre un error.
+    """
     try:
-        response = requests.get(url)
-        if response.status_code == 200:
-            status = response.text.strip().upper()
-            return status == "ON"
-        else:
-            print("Failed to fetch status. HTTP", response.status_code)
-            return False
+        response = requests.get(url, timeout=timeout)
+        # Lanza una excepción para códigos de error HTTP (4xx cliente o 5xx servidor)
+        response.raise_for_status()
+
+        # Limpieza y normalización del texto:
+        # - .encode('utf-8').decode('utf-8-sig') maneja el BOM (Byte Order Mark) si estuviera presente.
+        # - .strip() elimina espacios en blanco al inicio y al final.
+        # - .upper() convierte a mayúsculas para una comparación insensible a mayúsculas/minúsculas.
+        status = response.text.encode('utf-8').decode('utf-8-sig').strip().upper()
+
+        # Opcional: Descomenta la siguiente línea para depurar el valor leído
+        # print(f"Debug: Remote security status leído desde '{url}': '{status}'")
+
+        return status == "ON"
+
+    except requests.exceptions.HTTPError as http_err:
+        # Error específico para respuestas HTTP no exitosas (ej. 404 Not Found, 500 Server Error)
+        print(f"Fallo al obtener estado de seguridad desde {url} (HTTP {http_err.response.status_code}).")
+        return False
+    except requests.exceptions.Timeout:
+        # Error si la solicitud excede el tiempo de espera especificado
+        print(f"Fallo al obtener estado de seguridad desde {url} (Timeout).")
+        return False
+    except requests.exceptions.RequestException as req_err:
+        # Captura otros errores relacionados con la librería requests (ej. problemas de red, DNS)
+        print(f"Fallo al obtener estado de seguridad desde {url} (Error de Red/Petición): {req_err}")
+        return False
     except Exception as e:
-        print("Error checking remote status:", e)
+        # Captura cualquier otra excepción inesperada durante el proceso
+        print(f"Error inesperado al verificar estado de seguridad desde {url}: {e}")
         return False
 
+# El bloque if/else para llamar a la función y mostrar el mensaje
+# Este bloque utiliza la función actualizada definida arriba.
 if check_remote_security_status():
     print("✅ Seguridad ACTIVADA (ON).")
 else:
     print("⚠️ Seguridad DESACTIVADA (OFF).")
-
